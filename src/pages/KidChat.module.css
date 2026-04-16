@@ -1,0 +1,255 @@
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fdf0e3;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 2px solid var(--border);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  flex-shrink: 0;
+}
+
+.backBtn {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: var(--text);
+  transition: 0.15s;
+}
+.backBtn:hover { background: var(--border); }
+
+.agentInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex: 1;
+  text-align: left;
+  padding: 6px 10px;
+  border-radius: 12px;
+  transition: 0.15s;
+}
+.agentInfo:hover { background: var(--surface2); }
+
+.agentEmoji { font-size: 36px; }
+.agentName { font-size: 16px; font-weight: 800; }
+.agentDesc { font-size: 12px; color: var(--text-muted); }
+.switchHint { font-size: 12px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+
+.kidBadge {
+  background: var(--accent-light);
+  border: 2px solid #f5caa5;
+  border-radius: 99px;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.agentPickerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.agentPicker {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agentPicker h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.agentPickerItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: transparent;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+  transition: 0.15s;
+}
+.agentPickerItem:hover { background: var(--surface2); border-color: var(--accent); }
+.agentPickerActive { background: var(--green-light) !important; border-color: var(--green) !important; }
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bubble {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 85%;
+}
+
+.bubbleUser {
+  flex-direction: row-reverse;
+  align-self: flex-end;
+  margin-left: auto;
+}
+
+.bubbleAgent {
+  align-self: flex-start;
+}
+
+.bubbleAgent_emoji {
+  font-size: 28px;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.bubbleContent {
+  padding: 12px 16px;
+  border-radius: 20px;
+  line-height: 1.55;
+  font-size: 15px;
+}
+
+.bubbleContentUser {
+  background: var(--accent);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.bubbleContentAgent {
+  background: white;
+  border: 2px solid var(--border);
+  border-bottom-left-radius: 4px;
+  border-top: 3px solid var(--agent-color, var(--accent));
+  color: var(--text);
+}
+
+.bubbleText {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.typing span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--agent-color, var(--accent));
+  display: inline-block;
+  opacity: 0.4;
+  animation: bounce 1.2s ease-in-out infinite;
+}
+.typing span:nth-child(1) { animation-delay: 0s; }
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-8px); opacity: 1; }
+}
+
+.errorBubble {
+  background: var(--yellow-light);
+  border: 2px solid var(--yellow);
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7a5a00;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  align-self: center;
+  max-width: 90%;
+}
+
+.inputArea {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 12px 16px;
+  background: white;
+  border-top: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2.5px solid var(--border);
+  border-radius: 20px;
+  font-size: 15px;
+  font-family: var(--font);
+  font-weight: 600;
+  resize: none;
+  max-height: 100px;
+  overflow-y: auto;
+  line-height: 1.4;
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color 0.15s;
+}
+.input:focus { border-color: var(--accent); outline: none; }
+.input::placeholder { color: var(--text-muted); font-weight: 400; }
+
+.sendBtn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: white;
+  font-size: 20px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.sendBtn:not(:disabled):hover { transform: scale(1.1); }
+.sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }

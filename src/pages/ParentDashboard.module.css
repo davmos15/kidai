@@ -1,0 +1,571 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.lockPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 24px;
+}
+
+.lockCard {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lockIcon { font-size: 48px; }
+.lockCard h2 { font-family: var(--font-display); font-size: 28px; }
+.lockCard p { color: var(--text-muted); font-size: 14px; }
+
+.pinError {
+  background: var(--red-light);
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.headerTitle h1 {
+  font-family: var(--font-display);
+  font-size: 24px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: calc(100vh - 65px);
+}
+
+@media (max-width: 640px) {
+  .layout { grid-template-columns: 1fr; }
+  .nav { display: flex; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1.5px solid var(--border); }
+}
+
+.nav {
+  border-right: 1.5px solid var(--border);
+  background: var(--surface2);
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: transparent;
+  transition: 0.15s;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.navItem:hover { background: var(--border); color: var(--text); }
+
+.navActive {
+  background: var(--surface) !important;
+  color: var(--accent) !important;
+  border-right: 3px solid var(--accent);
+}
+
+.content {
+  padding: 32px;
+  max-width: 800px;
+}
+
+.sectionHeader { margin-bottom: 20px; }
+.sectionHeader h2 { font-family: var(--font-display); font-size: 28px; margin-bottom: 4px; }
+.sectionHeader h3 { font-family: var(--font-display); font-size: 20px; margin-bottom: 4px; }
+.sectionHeader p { font-size: 14px; color: var(--text-muted); }
+
+.kidCard {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+
+.kidHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.kidEmoji { font-size: 36px; }
+.kidName { font-size: 18px; font-weight: 800; }
+.kidSub { font-size: 13px; color: var(--text-muted); }
+.kidActions { display: flex; gap: 8px; margin-left: auto; }
+
+.kidAgents { padding-top: 12px; border-top: 1.5px solid var(--border); }
+.kidAgentsLabel { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.kidAgentsList { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.agentChip {
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.agentChipOn {
+  background: var(--green-light);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.noAgents { font-size: 13px; color: var(--text-muted); font-style: italic; }
+
+.addCard {
+  background: var(--surface2);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.addCard h3 { font-weight: 800; margin-bottom: 12px; }
+
+.addKidRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.emojiSelect {
+  width: 70px;
+  font-size: 20px;
+  padding: 10px 8px;
+}
+
+.agentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.agentCard {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 4px solid var(--c);
+}
+
+.agentTop { display: flex; align-items: center; gap: 12px; }
+.agentEmoji { font-size: 28px; }
+.agentName { font-size: 15px; font-weight: 800; }
+.agentProvider { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.agentDesc { font-size: 13px; color: var(--text-muted); flex: 1; }
+.agentButtons { display: flex; gap: 8px; margin-top: 4px; }
+
+.addAgentBtn {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: 0.15s;
+  min-height: 140px;
+}
+.addAgentBtn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+.presetGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.presetCard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 2px solid var(--border);
+  border-radius: 99px;
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.presetCard:hover { border-color: var(--accent); background: var(--accent-light); }
+.presetDisabled { opacity: 0.45; cursor: not-allowed; }
+.noKey { font-size: 11px; color: var(--red); }
+
+.settingsCard {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.settingsCard h3 { font-weight: 800; font-size: 16px; margin-bottom: 16px; }
+
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.settingRow:last-child { border-bottom: none; }
+
+.settingLabel { font-size: 14px; font-weight: 700; }
+.settingDesc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.radioRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.radioRow:last-child { border-bottom: none; }
+.radioRow input { margin-top: 3px; accent-color: var(--accent); }
+
+.wordCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  min-height: 36px;
+}
+
+.wordTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--red-light);
+  color: var(--red);
+  border: 1.5px solid #f5cbc5;
+  border-radius: 99px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.wordRemove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--red);
+  font-size: 11px;
+  padding: 0;
+  line-height: 1;
+}
+
+.addWordRow { display: flex; gap: 8px; }
+
+.keyCard {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 12px;
+}
+
+.keyHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.keyName { font-size: 15px; font-weight: 800; }
+.docsLink { font-size: 13px; color: var(--accent); font-weight: 700; text-decoration: none; }
+.docsLink:hover { text-decoration: underline; }
+.keyStatus { font-size: 12px; color: var(--green); font-weight: 700; margin-top: 8px; }
+.keyWarning { font-size: 12px; color: var(--yellow); font-weight: 700; margin-top: 4px; }
+
+.keyNote {
+  background: var(--accent2-light);
+  border: 1.5px solid #cce0ff;
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--accent2);
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.kidChatCard {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 8px;
+}
+
+.kidChatHeader { display: flex; align-items: center; gap: 14px; }
+
+.chatSession { margin-bottom: 24px; }
+.chatDate {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.chatBubble {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  max-width: 85%;
+}
+
+.chatUser { background: var(--accent-light); align-self: flex-end; margin-left: auto; border-bottom-right-radius: 4px; }
+.chatAgent { background: var(--surface); border: 1.5px solid var(--border); align-self: flex-start; border-bottom-left-radius: 4px; }
+
+.chatRole { font-size: 11px; font-weight: 800; color: var(--text-muted); }
+.chatText { font-size: 14px; line-height: 1.5; }
+.chatTime { font-size: 11px; color: var(--text-muted); align-self: flex-end; }
+
+.empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 15px;
+  padding: 48px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+}
+
+/* ── Age Level Slider ─────────────────────────────────────────────────── */
+
+.ageLevelWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ageLevelDisplay {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ageLevelBadge {
+  background: var(--accent);
+  color: white;
+  border-radius: 99px;
+  padding: 4px 14px;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.ageLevelDesc {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.ageSlider {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 6px;
+  cursor: pointer;
+}
+
+.ageLevelTicks {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.ageTick {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+  width: 24px;
+  text-align: center;
+}
+
+.ageTickActive {
+  color: var(--accent);
+}
+
+.ageLevelHint {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* ── Per-kid safety panel ─────────────────────────────────────────────── */
+
+.safetyBadge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 2px 8px;
+}
+
+.safetyBadgeGlobal {
+  background: var(--accent2-light);
+  color: var(--accent2);
+}
+
+.safetyBadgeCustom {
+  background: var(--purple-light);
+  color: var(--purple);
+}
+
+.kidSafetyPanel {
+  border-top: 2px solid var(--border);
+  margin-top: 16px;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kidSafetyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.kidSafetyHeader h4 {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.useGlobalToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.globalInheritNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--green-light);
+  border: 1.5px solid #a8e6c5;
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green);
+  line-height: 1.5;
+}
+
+/* ── Backup tab ───────────────────────────────────────────────────────── */
+
+.backupGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.backupCard {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow);
+}
+
+.backupIcon {
+  font-size: 36px;
+}
+
+.backupCard h3 {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.backupCard p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.keyWarningBox {
+  background: var(--yellow-light);
+  border: 1.5px solid var(--yellow);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a5a00;
+}
+
+.importStatus {
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1.5px solid;
+}
