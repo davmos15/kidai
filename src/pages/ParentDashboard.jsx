@@ -232,7 +232,7 @@ export default function ParentDashboard({ config, onSave, onBack }) {
                             autoFocus
                             onChange={e => updateKidField(kid.id, 'name', e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter') setEditingKidId(null); }}
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, minWidth: 0 }}
                           />
                           <button className="btn btn-primary" style={{ fontSize: 12, padding: '7px 12px' }}
                             onClick={() => setEditingKidId(null)}>Done</button>
@@ -320,7 +320,7 @@ export default function ParentDashboard({ config, onSave, onBack }) {
                     {KID_EMOJIS.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
                   <input className="input" value={newKidName} onChange={e => setNewKidName(e.target.value)}
-                    placeholder="Child's name" style={{ flex: 1 }} onKeyDown={e => e.key === 'Enter' && addKid()} />
+                    placeholder="Child's name" style={{ flex: 1, minWidth: 0 }} onKeyDown={e => e.key === 'Enter' && addKid()} />
                   <button className="btn btn-primary" onClick={addKid}>Add</button>
                 </div>
               </div>

@@ -189,9 +189,14 @@
 }
 
 .emojiSelect {
-  width: 70px;
-  font-size: 20px;
-  padding: 10px 8px;
+  width: 52px;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 22px;
+  /* strip native <select> chrome so it reads as a single emoji tile */
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: none;
 }
 
 .agentGrid {
