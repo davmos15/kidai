@@ -132,9 +132,21 @@
 }
 
 .kidEmoji { font-size: 36px; }
-.kidName { font-size: 18px; font-weight: 800; }
+.kidName { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
 .kidSub { font-size: 13px; color: var(--text-muted); }
 .kidActions { display: flex; gap: 8px; margin-left: auto; }
+
+.inlineEditBtn {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: opacity 0.15s, background 0.15s;
+}
+.inlineEditBtn:hover { opacity: 1; background: var(--surface2); }
 
 .kidAgents { padding-top: 12px; border-top: 1.5px solid var(--border); }
 .kidAgentsLabel { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }

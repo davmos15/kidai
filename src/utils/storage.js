@@ -55,6 +55,9 @@ export const DEFAULT_CONFIG = {
   },
 };
 
+// Presets are provider-agnostic — they define a personality only. The provider
+// + model are picked at the moment the parent adds the preset, based on which
+// API keys are available (see pickProviderForAgent below).
 export const PRESET_AGENTS = [
   {
     id: 'math-tutor',
@@ -62,12 +65,10 @@ export const PRESET_AGENTS = [
     emoji: '🔢',
     color: '#2c7be8',
     description: 'Helps with maths homework and concepts',
-    systemPrompt: `You are Maths Mate, a friendly and encouraging maths tutor for kids. 
-You explain concepts step by step, use simple language, and celebrate progress. 
+    systemPrompt: `You are Maths Mate, a friendly and encouraging maths tutor for kids.
+You explain concepts step by step, use simple language, and celebrate progress.
 Never just give answers — guide the child to figure it out themselves with hints.
 Keep responses short and focused. Use emojis to keep things fun! 🎉`,
-    provider: 'anthropic',
-    model: 'claude-3-haiku-20240307',
   },
   {
     id: 'story-buddy',
@@ -79,8 +80,6 @@ Keep responses short and focused. Use emojis to keep things fun! 🎉`,
 You craft age-appropriate, exciting stories with the child as the hero.
 Ask them what kind of adventure they want, then bring it to life!
 Keep stories positive, safe, and full of wonder. Use vivid descriptions.`,
-    provider: 'openai',
-    model: 'gpt-4o-mini',
   },
   {
     id: 'science-explorer',
@@ -92,8 +91,6 @@ Keep stories positive, safe, and full of wonder. Use vivid descriptions.`,
 You make science exciting with fun facts, simple experiments they can try at home,
 and clear explanations of how the world works. Always encourage curiosity!
 Use analogies kids can relate to. Keep it fun and age-appropriate.`,
-    provider: 'gemini',
-    model: 'gemini-1.5-flash',
   },
   {
     id: 'homework-helper',
@@ -105,8 +102,6 @@ Use analogies kids can relate to. Keep it fun and age-appropriate.`,
 You help kids understand their homework without doing it for them.
 Break down complex topics into simple steps. Always be encouraging and positive.
 Celebrate when kids get things right!`,
-    provider: 'anthropic',
-    model: 'claude-3-haiku-20240307',
   },
   {
     id: 'fun-buddy',
@@ -118,10 +113,28 @@ Celebrate when kids get things right!`,
 You play word games, tell age-appropriate jokes, share fun riddles, and trivia.
 Keep everything positive, silly, and age-appropriate.
 Never get into serious or sad topics — keep the energy HIGH and FUN!`,
-    provider: 'openai',
-    model: 'gpt-4o-mini',
   },
 ];
+
+// Picks the best available provider for a preset, based on which keys the
+// parent has connected. Priority: anthropic → openai → gemini. Returns null
+// if no keys are set.
+export function pickProviderForAgent(apiKeys) {
+  const order = ['anthropic', 'openai', 'gemini'];
+  for (const p of order) {
+    if (apiKeys?.[p]?.trim()) return { provider: p, model: FALLBACK_MODELS[p][0] };
+  }
+  return null;
+}
+
+// Hydrates a preset with a concrete provider + model. If the preset already
+// carries explicit provider/model (e.g. old config), those are preserved.
+export function hydratePreset(preset, apiKeys) {
+  if (preset.provider && preset.model) return { ...preset };
+  const pick = pickProviderForAgent(apiKeys);
+  if (!pick) return { ...preset, provider: 'anthropic', model: FALLBACK_MODELS.anthropic[0] };
+  return { ...preset, ...pick };
+}
 
 export function loadConfig() {
   try {
@@ -278,6 +291,25 @@ export function sanitizeInput(text) {
   return clean;
 }
 
+// Turns a failed API response into a human-readable error. 404 almost always
+// means the model ID is wrong/retired — the most common foot-gun, so we call
+// it out explicitly and tell the parent where to fix it.
+async function describeHttpError(res, provider, model) {
+  let detail = '';
+  try { const body = await res.json(); detail = body?.error?.message || body?.error || ''; } catch {}
+  if (res.status === 404) {
+    return `The model "${model}" isn't available on your ${provider} account (it may have been retired). ` +
+      `A parent can fix this in the Parent Dashboard → Agents → Edit.`;
+  }
+  if (res.status === 401 || res.status === 403) {
+    return `Your ${provider} API key was rejected. Check it in Parent Dashboard → API Keys.`;
+  }
+  if (res.status === 429) {
+    return `Too many requests to ${provider} right now. Wait a moment and try again.`;
+  }
+  return `${provider} error ${res.status}${detail ? `: ${detail}` : ''}`;
+}
+
 export async function callAI(provider, model, apiKey, messages, systemPrompt) {
   if (provider === 'anthropic') {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -295,7 +327,7 @@ export async function callAI(provider, model, apiKey, messages, systemPrompt) {
         messages: messages.map(m => ({ role: m.role, content: m.content })),
       }),
     });
-    if (!res.ok) throw new Error(`Anthropic API error: ${res.status}`);
+    if (!res.ok) throw new Error(await describeHttpError(res, 'Anthropic', model));
     const data = await res.json();
     return data.content[0].text;
   }
@@ -310,13 +342,13 @@ export async function callAI(provider, model, apiKey, messages, systemPrompt) {
         messages: [{ role: 'system', content: systemPrompt }, ...messages],
       }),
     });
-    if (!res.ok) throw new Error(`OpenAI API error: ${res.status}`);
+    if (!res.ok) throw new Error(await describeHttpError(res, 'OpenAI', model));
     const data = await res.json();
     return data.choices[0].message.content;
   }
 
   if (provider === 'gemini') {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -325,9 +357,17 @@ export async function callAI(provider, model, apiKey, messages, systemPrompt) {
         contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
       }),
     });
-    if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
+    if (!res.ok) throw new Error(await describeHttpError(res, 'Gemini', model));
     const data = await res.json();
-    return data.candidates[0].content.parts[0].text;
+    // Gemini can omit candidates[0].content when a safety filter blocks the reply
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      const reason = data?.candidates?.[0]?.finishReason;
+      throw new Error(reason === 'SAFETY'
+        ? 'Gemini blocked this response for safety reasons — try rephrasing.'
+        : 'Gemini returned an empty response.');
+    }
+    return text;
   }
 
   throw new Error('Unknown provider');
@@ -335,12 +375,13 @@ export async function callAI(provider, model, apiKey, messages, systemPrompt) {
 
 // Fallback model lists — used when no API key is set or the fetch fails.
 // These are known-good model IDs; dynamic fetch will replace them when possible.
+// Ordered so position [0] is the best default for a kids' chat app
+// (cheap, fast, known-available). The live fetch will replace this when a key is set.
 export const FALLBACK_MODELS = {
   anthropic: [
     'claude-3-5-haiku-20241022',
     'claude-3-5-sonnet-20241022',
     'claude-3-haiku-20240307',
-    'claude-3-opus-20240229',
   ],
   openai: [
     'gpt-4o-mini',
@@ -349,9 +390,9 @@ export const FALLBACK_MODELS = {
     'gpt-3.5-turbo',
   ],
   gemini: [
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
+    'gemini-2.5-flash',
     'gemini-2.0-flash',
+    'gemini-2.5-pro',
   ],
 };
 

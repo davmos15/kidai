@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { DEFAULT_CONFIG, PRESET_AGENTS, saveConfig, generateId, DEFAULT_KID_SAFETY } from '../utils/storage';
+import { DEFAULT_CONFIG, PRESET_AGENTS, saveConfig, generateId, DEFAULT_KID_SAFETY, hydratePreset, pickProviderForAgent } from '../utils/storage';
+import SecretInput from '../components/SecretInput';
 import styles from './Setup.module.css';
 
 const PROVIDERS = [
@@ -10,6 +11,7 @@ const PROVIDERS = [
 
 export default function Setup({ onComplete }) {
   const [step, setStep] = useState(0);
+  const [maxReached, setMaxReached] = useState(0);
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const [apiKeys, setApiKeys] = useState({ anthropic: '', openai: '', gemini: '' });
@@ -18,6 +20,13 @@ export default function Setup({ onComplete }) {
   const [error, setError] = useState('');
 
   const steps = ['Welcome', 'Parent PIN', 'API Keys', 'Add Kids', 'Choose Agents', 'Done'];
+
+  // Jump to any step the user has already reached — forward or back.
+  // Validation only runs when moving forward from the current step via "Next".
+  const goToStep = (i) => {
+    setError('');
+    if (i <= maxReached) setStep(i);
+  };
 
   const nextStep = () => {
     setError('');
@@ -32,7 +41,11 @@ export default function Setup({ onComplete }) {
     if (step === 3) {
       if (kids.some(k => !k.name.trim())) return setError('Please enter a name for each child');
     }
-    setStep(s => s + 1);
+    setStep(s => {
+      const next = s + 1;
+      setMaxReached(m => Math.max(m, next));
+      return next;
+    });
   };
 
   const finish = () => {
@@ -41,7 +54,9 @@ export default function Setup({ onComplete }) {
       parentPin: pin,
       apiKeys,
       kids: kids.map(k => ({ ...k, agentIds: selectedAgents, safety: { ...DEFAULT_KID_SAFETY } })),
-      agents: PRESET_AGENTS.filter(a => selectedAgents.includes(a.id)),
+      agents: PRESET_AGENTS
+        .filter(a => selectedAgents.includes(a.id))
+        .map(a => hydratePreset(a, apiKeys)),
       globalSettings: { ...DEFAULT_CONFIG.globalSettings, ageLevel: 8 },
     };
     saveConfig(config);
@@ -62,12 +77,24 @@ export default function Setup({ onComplete }) {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.steps}>
-          {steps.map((s, i) => (
-            <div key={i} className={`${styles.step} ${i === step ? styles.stepActive : ''} ${i < step ? styles.stepDone : ''}`}>
-              <div className={styles.stepDot}>{i < step ? '✓' : i + 1}</div>
-              <span className={styles.stepLabel}>{s}</span>
-            </div>
-          ))}
+          {steps.map((s, i) => {
+            const reachable = i <= maxReached;
+            const clickable = reachable && i !== step;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => clickable && goToStep(i)}
+                disabled={!clickable}
+                className={`${styles.step} ${i === step ? styles.stepActive : ''} ${i < step ? styles.stepDone : ''} ${clickable ? styles.stepClickable : ''}`}
+                style={{ background: 'transparent', border: 'none', padding: 0 }}
+                title={clickable ? `Go back to ${s}` : ''}
+              >
+                <div className={styles.stepDot}>{i < step ? '✓' : i + 1}</div>
+                <span className={styles.stepLabel}>{s}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className={styles.body}>
@@ -91,11 +118,11 @@ export default function Setup({ onComplete }) {
               <p>This PIN protects the parent dashboard. Kids won't be able to access settings.</p>
               <div className={styles.field}>
                 <label>Create PIN (4+ digits)</label>
-                <input className="input" type="password" inputMode="numeric" value={pin} onChange={e => setPin(e.target.value)} placeholder="••••" maxLength={8} />
+                <SecretInput inputMode="numeric" value={pin} onChange={e => setPin(e.target.value)} placeholder="••••" maxLength={8} />
               </div>
               <div className={styles.field}>
                 <label>Confirm PIN</label>
-                <input className="input" type="password" inputMode="numeric" value={pinConfirm} onChange={e => setPinConfirm(e.target.value)} placeholder="••••" maxLength={8} />
+                <SecretInput inputMode="numeric" value={pinConfirm} onChange={e => setPinConfirm(e.target.value)} placeholder="••••" maxLength={8} />
               </div>
             </div>
           )}
@@ -112,7 +139,7 @@ export default function Setup({ onComplete }) {
                       Get API Key →
                     </a>
                   </div>
-                  <input className="input" type="password" value={apiKeys[p.id]} onChange={e => setApiKeys(prev => ({ ...prev, [p.id]: e.target.value }))} placeholder={p.placeholder} />
+                  <SecretInput value={apiKeys[p.id]} onChange={e => setApiKeys(prev => ({ ...prev, [p.id]: e.target.value }))} placeholder={p.placeholder} />
                 </div>
               ))}
             </div>
@@ -127,7 +154,15 @@ export default function Setup({ onComplete }) {
                   <select className={`input ${styles.emojiSelect}`} value={kid.emoji} onChange={e => updateKid(kid.id, 'emoji', e.target.value)}>
                     {KID_EMOJIS.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
-                  <input className="input" value={kid.name} onChange={e => updateKid(kid.id, 'name', e.target.value)} placeholder={`Child ${i + 1}'s name`} style={{ flex: 1 }} />
+                  <input
+                    className="input"
+                    value={kid.name}
+                    onChange={e => updateKid(kid.id, 'name', e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && kid.name.trim()) { e.preventDefault(); nextStep(); } }}
+                    placeholder={`Child ${i + 1}'s name`}
+                    style={{ flex: 1 }}
+                    autoFocus={i === 0}
+                  />
                   {kids.length > 1 && (
                     <button className="btn btn-danger" onClick={() => removeKid(kid.id)} style={{ padding: '10px 14px' }}>✕</button>
                   )}
@@ -137,31 +172,41 @@ export default function Setup({ onComplete }) {
             </div>
           )}
 
-          {step === 4 && (
-            <div className={styles.section}>
-              <h2>Choose AI Agents</h2>
-              <p>Select which preset agents your kids can use. You can customise these later or create your own.</p>
-              <div className={styles.agentGrid}>
-                {PRESET_AGENTS.map(agent => {
-                  const providerKey = agent.provider;
-                  const hasKey = apiKeys[providerKey]?.trim().length > 0;
-                  const selected = selectedAgents.includes(agent.id);
-                  return (
-                    <button key={agent.id} className={`${styles.agentCard} ${selected ? styles.agentSelected : ''} ${!hasKey ? styles.agentDisabled : ''}`}
-                      onClick={() => hasKey && toggleAgent(agent.id)}
-                      style={{ '--agent-color': agent.color }}
-                    >
-                      <span className={styles.agentEmoji}>{agent.emoji}</span>
-                      <span className={styles.agentName}>{agent.name}</span>
-                      <span className={styles.agentDesc}>{agent.description}</span>
-                      {!hasKey && <span className={styles.agentNoKey}>Needs {agent.provider} key</span>}
-                      {selected && <span className={styles.agentCheck}>✓</span>}
-                    </button>
-                  );
-                })}
+          {step === 4 && (() => {
+            const pick = pickProviderForAgent(apiKeys);
+            return (
+              <div className={styles.section}>
+                <h2>Choose AI Agents</h2>
+                <p>Pick which companions your kids can chat with. All agents run on whichever AI provider you have a key for — you can switch providers per-agent later.</p>
+                {pick ? (
+                  <div style={{ fontSize: 13, color: 'var(--green)', background: 'var(--green-light)', padding: '8px 12px', borderRadius: 10, marginBottom: 12, fontWeight: 600 }}>
+                    ✓ Using <strong>{pick.provider}</strong> by default ({pick.model})
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 13, color: 'var(--red)', background: 'var(--red-light)', padding: '8px 12px', borderRadius: 10, marginBottom: 12, fontWeight: 600 }}>
+                    ⚠️ No API key set — go back to step 3 and add one
+                  </div>
+                )}
+                <div className={styles.agentGrid}>
+                  {PRESET_AGENTS.map(agent => {
+                    const selected = selectedAgents.includes(agent.id);
+                    const disabled = !pick;
+                    return (
+                      <button key={agent.id} className={`${styles.agentCard} ${selected ? styles.agentSelected : ''} ${disabled ? styles.agentDisabled : ''}`}
+                        onClick={() => !disabled && toggleAgent(agent.id)}
+                        style={{ '--agent-color': agent.color }}
+                      >
+                        <span className={styles.agentEmoji}>{agent.emoji}</span>
+                        <span className={styles.agentName}>{agent.name}</span>
+                        <span className={styles.agentDesc}>{agent.description}</span>
+                        {selected && <span className={styles.agentCheck}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {step === 5 && (
             <div className={styles.welcome}>

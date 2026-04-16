@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { saveConfig, loadChats, exportChats, exportConfig, exportConfigWithKeys, importConfig, generateId, PRESET_AGENTS, AGE_LEVELS, DEFAULT_KID_SAFETY, FALLBACK_MODELS, fetchModels } from '../utils/storage';
+import { saveConfig, loadChats, exportChats, exportConfig, exportConfigWithKeys, importConfig, generateId, PRESET_AGENTS, AGE_LEVELS, DEFAULT_KID_SAFETY, FALLBACK_MODELS, fetchModels, hydratePreset, pickProviderForAgent } from '../utils/storage';
+import SecretInput from '../components/SecretInput';
 import styles from './ParentDashboard.module.css';
 
 const PROVIDERS = [
@@ -154,6 +155,7 @@ export default function ParentDashboard({ config, onSave, onBack }) {
   const [newKidEmoji, setNewKidEmoji] = useState('🧒');
   const [pinError, setPinError] = useState('');
   const [expandedKidSafety, setExpandedKidSafety] = useState(null);
+  const [editingKidId, setEditingKidId] = useState(null);
   const [importStatus, setImportStatus] = useState('');
   const [showFullExportWarning, setShowFullExportWarning] = useState(false);
   const importRef = useRef(null);
@@ -193,6 +195,13 @@ export default function ParentDashboard({ config, onSave, onBack }) {
 
   const removeKid = (id) => updateCfg(prev => ({ ...prev, kids: prev.kids.filter(k => k.id !== id) }));
 
+  const updateKidField = (kidId, field, value) => {
+    updateCfg(prev => ({
+      ...prev,
+      kids: prev.kids.map(k => k.id === kidId ? { ...k, [field]: value } : k),
+    }));
+  };
+
   const toggleKidAgent = (kidId, agentId) => {
     updateCfg(prev => ({
       ...prev,
@@ -211,7 +220,7 @@ export default function ParentDashboard({ config, onSave, onBack }) {
 
   const addPresetAgent = (preset) => {
     if (cfg.agents.find(a => a.id === preset.id)) return;
-    updateCfg(prev => ({ ...prev, agents: [...prev.agents, { ...preset }] }));
+    updateCfg(prev => ({ ...prev, agents: [...prev.agents, hydratePreset(preset, prev.apiKeys)] }));
   };
 
   const removeAgent = (id) => {
@@ -332,27 +341,56 @@ export default function ParentDashboard({ config, onSave, onBack }) {
                 const isExpanded = expandedKidSafety === kid.id;
                 const ageLevelObj = AGE_LEVELS.find(l => l.age === (kidSafety.useGlobal ? cfg.globalSettings.ageLevel : kidSafety.ageLevel)) || AGE_LEVELS[2];
 
+                const isEditing = editingKidId === kid.id;
                 return (
                   <div key={kid.id} className={styles.kidCard}>
                     <div className={styles.kidHeader}>
-                      <span className={styles.kidEmoji}>{kid.emoji}</span>
-                      <div style={{ flex: 1 }}>
-                        <div className={styles.kidName}>{kid.name}</div>
-                        <div className={styles.kidSub}>
-                          {kid.agentIds.length} agent(s) ·{' '}
-                          <span className={`${styles.safetyBadge} ${kidSafety.useGlobal ? styles.safetyBadgeGlobal : styles.safetyBadgeCustom}`}>
-                            {kidSafety.useGlobal ? '🌐 Global safety' : `✏️ Custom · ${ageLevelObj.label}`}
-                          </span>
-                        </div>
-                      </div>
-                      <div className={styles.kidActions}>
-                        <button className="btn btn-secondary" style={{ fontSize: 12, padding: '7px 12px' }} onClick={() => viewChats(kid)}>Chats</button>
-                        <button className="btn btn-secondary" style={{ fontSize: 12, padding: '7px 12px' }}
-                          onClick={() => setExpandedKidSafety(isExpanded ? null : kid.id)}>
-                          {isExpanded ? 'Close ▲' : '⚙️ Settings ▼'}
-                        </button>
-                        <button className="btn btn-danger" style={{ fontSize: 12, padding: '7px 12px' }} onClick={() => removeKid(kid.id)}>✕</button>
-                      </div>
+                      {isEditing ? (
+                        <>
+                          <select
+                            className={`input ${styles.emojiSelect}`}
+                            value={kid.emoji}
+                            onChange={e => updateKidField(kid.id, 'emoji', e.target.value)}
+                          >
+                            {KID_EMOJIS.map(e => <option key={e} value={e}>{e}</option>)}
+                          </select>
+                          <input
+                            className="input"
+                            value={kid.name}
+                            autoFocus
+                            onChange={e => updateKidField(kid.id, 'name', e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') setEditingKidId(null); }}
+                            style={{ flex: 1 }}
+                          />
+                          <button className="btn btn-primary" style={{ fontSize: 12, padding: '7px 12px' }}
+                            onClick={() => setEditingKidId(null)}>Done</button>
+                        </>
+                      ) : (
+                        <>
+                          <span className={styles.kidEmoji}>{kid.emoji}</span>
+                          <div style={{ flex: 1 }}>
+                            <div className={styles.kidName}>
+                              {kid.name}
+                              <button className={styles.inlineEditBtn} onClick={() => setEditingKidId(kid.id)} title="Edit name & emoji">✏️</button>
+                            </div>
+                            <div className={styles.kidSub}>
+                              {kid.agentIds.length} agent(s) ·{' '}
+                              <span className={`${styles.safetyBadge} ${kidSafety.useGlobal ? styles.safetyBadgeGlobal : styles.safetyBadgeCustom}`}>
+                                {kidSafety.useGlobal ? '🌐 Global safety' : `✏️ Custom · ${ageLevelObj.label}`}
+                              </span>
+                            </div>
+                          </div>
+                          <div className={styles.kidActions}>
+                            <button className="btn btn-secondary" style={{ fontSize: 12, padding: '7px 12px' }} onClick={() => viewChats(kid)}>Chats</button>
+                            <button className="btn btn-secondary" style={{ fontSize: 12, padding: '7px 12px' }}
+                              onClick={() => setExpandedKidSafety(isExpanded ? null : kid.id)}>
+                              {isExpanded ? 'Close ▲' : '⚙️ Settings ▼'}
+                            </button>
+                            <button className="btn btn-danger" style={{ fontSize: 12, padding: '7px 12px' }}
+                              onClick={() => { if (window.confirm(`Remove ${kid.name}? Chat history will stay on the device until cleared.`)) removeKid(kid.id); }}>✕</button>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className={styles.kidAgents}>
@@ -453,19 +491,18 @@ export default function ParentDashboard({ config, onSave, onBack }) {
                 <p>Quick-add pre-configured agents</p>
               </div>
               <div className={styles.presetGrid}>
-                {PRESET_AGENTS.filter(p => !cfg.agents.find(a => a.id === p.id)).map(preset => {
-                  const hasKey = cfg.apiKeys[preset.provider]?.trim().length > 0;
-                  return (
-                    <button key={preset.id} className={`${styles.presetCard} ${!hasKey ? styles.presetDisabled : ''}`}
-                      onClick={() => hasKey && addPresetAgent(preset)}>
+                {(() => {
+                  const pick = pickProviderForAgent(cfg.apiKeys);
+                  const avail = PRESET_AGENTS.filter(p => !cfg.agents.find(a => a.id === p.id));
+                  if (avail.length === 0) return <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>All preset agents have been added!</p>;
+                  return avail.map(preset => (
+                    <button key={preset.id} className={`${styles.presetCard} ${!pick ? styles.presetDisabled : ''}`}
+                      onClick={() => pick && addPresetAgent(preset)}>
                       <span>{preset.emoji}</span><span>{preset.name}</span>
-                      {!hasKey && <span className={styles.noKey}>Needs {preset.provider} key</span>}
+                      {!pick && <span className={styles.noKey}>Needs any API key</span>}
                     </button>
-                  );
-                })}
-                {PRESET_AGENTS.filter(p => !cfg.agents.find(a => a.id === p.id)).length === 0 && (
-                  <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>All preset agents have been added!</p>
-                )}
+                  ));
+                })()}
               </div>
             </div>
           )}
@@ -512,7 +549,7 @@ export default function ParentDashboard({ config, onSave, onBack }) {
                     <div className={styles.keyName}>{p.name}</div>
                     <a href={p.docs} target="_blank" rel="noopener noreferrer" className={styles.docsLink}>Get API Key →</a>
                   </div>
-                  <input className="input" type="password" value={cfg.apiKeys[p.id] || ''}
+                  <SecretInput value={cfg.apiKeys[p.id] || ''}
                     onChange={e => updateCfg(prev => ({ ...prev, apiKeys: { ...prev.apiKeys, [p.id]: e.target.value } }))}
                     placeholder={p.placeholder} />
                   {cfg.apiKeys[p.id] && <div className={styles.keyStatus}>✓ Key entered</div>}
