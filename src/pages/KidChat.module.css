@@ -253,3 +253,37 @@
 }
 .sendBtn:not(:disabled):hover { transform: scale(1.1); }
 .sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Break reminder — visually distinct from agent bubbles */
+.breakReminder {
+  align-self: center;
+  max-width: 80%;
+  margin: 4px auto;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, var(--yellow-light), var(--accent-light));
+  border: 1.5px dashed var(--accent);
+  border-radius: 18px;
+  text-align: center;
+}
+
+.breakReminderText {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Font size scaling — applied only inside KidChat via data-font-size attribute
+   on the root .page. Scales the elements kids actually read (bubbles + input)
+   without disturbing the header/controls layout. */
+.page[data-font-size="small"] .bubbleText { font-size: 14px; }
+.page[data-font-size="small"] .input { font-size: 14px; }
+.page[data-font-size="small"] .breakReminderText { font-size: 13px; }
+
+.page[data-font-size="large"] .bubbleText { font-size: 18px; }
+.page[data-font-size="large"] .input { font-size: 17px; }
+.page[data-font-size="large"] .breakReminderText { font-size: 16px; }
+
+.page[data-font-size="xlarge"] .bubbleText { font-size: 22px; line-height: 1.5; }
+.page[data-font-size="xlarge"] .input { font-size: 20px; }
+.page[data-font-size="xlarge"] .breakReminderText { font-size: 19px; }

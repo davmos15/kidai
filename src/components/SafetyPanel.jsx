@@ -66,6 +66,7 @@ export default function SafetyPanel({ settings, onChange, isKidOverride = false 
           ['blockVideo', 'Block video suggestions', "Agents won't suggest or reference YouTube or other videos", false],
           ['blockImages', 'Block image suggestions', "Agents won't reference or suggest searching for images", false],
           ['useEmojis', 'Use emojis in responses', 'When off, agents reply in plain text — no emojis, emoticons, or decorative symbols', true],
+          ['protectPersonalInfo', 'Protect personal info', "Blocks messages containing phone numbers, emails, or long digit sequences. Also instructs the AI never to ask for or repeat personal details.", true],
         ].map(([key, label, desc, defaultOn]) => {
           const current = settings[key] ?? defaultOn;
           return (
@@ -90,6 +91,68 @@ export default function SafetyPanel({ settings, onChange, isKidOverride = false 
               style={{ width: 200 }} />
             <span style={{ fontWeight: 800, color: 'var(--accent)' }}>{settings.maxResponseLength ?? 300} words</span>
           </div>
+        </div>
+      </div>
+
+      <div className={styles.settingsCard}>
+        <h3>⏱️ Usage Limits</h3>
+        <div className={styles.settingRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+          <div>
+            <div className={styles.settingLabel}>Daily message limit</div>
+            <div className={styles.settingDesc}>Caps the number of messages a child can send per day. Resets at midnight. Set to "Unlimited" to turn off.</div>
+          </div>
+          <select
+            className="input"
+            value={settings.dailyMessageLimit ?? 0}
+            onChange={e => updateSetting('dailyMessageLimit', parseInt(e.target.value, 10))}
+            style={{ maxWidth: 200, marginTop: 4 }}
+          >
+            <option value={0}>Unlimited</option>
+            <option value={10}>10 messages / day</option>
+            <option value={20}>20 messages / day</option>
+            <option value={50}>50 messages / day</option>
+            <option value={100}>100 messages / day</option>
+            <option value={200}>200 messages / day</option>
+          </select>
+        </div>
+        <div className={styles.settingRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+          <div>
+            <div className={styles.settingLabel}>Break reminders</div>
+            <div className={styles.settingDesc}>Shows a friendly "take a break" message after every N messages — encourages the child to stretch, drink water, step outside.</div>
+          </div>
+          <select
+            className="input"
+            value={settings.breakReminderEvery ?? 0}
+            onChange={e => updateSetting('breakReminderEvery', parseInt(e.target.value, 10))}
+            style={{ maxWidth: 200, marginTop: 4 }}
+          >
+            <option value={0}>Off</option>
+            <option value={10}>Every 10 messages</option>
+            <option value={15}>Every 15 messages</option>
+            <option value={20}>Every 20 messages</option>
+            <option value={30}>Every 30 messages</option>
+          </select>
+        </div>
+      </div>
+
+      <div className={styles.settingsCard}>
+        <h3>👁️ Appearance (Kid Chat)</h3>
+        <div className={styles.settingRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+          <div>
+            <div className={styles.settingLabel}>Font size</div>
+            <div className={styles.settingDesc}>Only affects the chat interface kids use — doesn't resize the Parent Dashboard.</div>
+          </div>
+          <select
+            className="input"
+            value={settings.fontSize || 'normal'}
+            onChange={e => updateSetting('fontSize', e.target.value)}
+            style={{ maxWidth: 200, marginTop: 4 }}
+          >
+            <option value="small">Small</option>
+            <option value="normal">Normal</option>
+            <option value="large">Large</option>
+            <option value="xlarge">Extra large</option>
+          </select>
         </div>
       </div>
 

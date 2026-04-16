@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { callAI, buildSafetySystemPrompt, filterResponse, loadChats, saveChats, resolveKidSettings, sanitizeInput } from '../utils/storage';
+import { callAI, buildSafetySystemPrompt, filterResponse, loadChats, saveChats, resolveKidSettings, sanitizeInput, detectPersonalInfo, getDailyCount, incrementDailyCount } from '../utils/storage';
 import styles from './KidChat.module.css';
+
+const PII_MESSAGES = {
+  phone: "Let's not share phone numbers here — ask me something else!",
+  email: "We don't share email addresses in chat. Try a different question!",
+  card: "That looks like a long number we shouldn't share. Ask me something else!",
+};
 
 export default function KidChat({ config, kid, agent, onBack }) {
   const agents = config.agents.filter(a => kid.agentIds.includes(a.id));
@@ -10,11 +16,13 @@ export default function KidChat({ config, kid, agent, onBack }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAgentPicker, setShowAgentPicker] = useState(false);
+  const [dailyCount, setDailyCount] = useState(() => getDailyCount(kid.id));
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
   const settings = resolveKidSettings(kid, config.globalSettings);
   const apiKey = config.apiKeys[currentAgent.provider];
+  const limitReached = settings.dailyMessageLimit > 0 && dailyCount >= settings.dailyMessageLimit;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,10 +51,24 @@ export default function KidChat({ config, kid, agent, onBack }) {
     const trimmed = sanitizeInput(input);
     if (!trimmed || loading) return;
 
+    if (limitReached) {
+      setError("You've used today's chats — see you tomorrow!");
+      return;
+    }
+
     if (isBlocked(trimmed)) {
-      setError("Oops! That's not something we can talk about. Try asking something else! 😊");
+      setError("Oops! That's not something we can talk about. Try asking something else!");
       setInput('');
       return;
+    }
+
+    if (settings.protectPersonalInfo) {
+      const kind = detectPersonalInfo(trimmed);
+      if (kind) {
+        setError(PII_MESSAGES[kind]);
+        setInput('');
+        return;
+      }
     }
 
     setError('');
@@ -56,8 +78,12 @@ export default function KidChat({ config, kid, agent, onBack }) {
     setInput('');
     setLoading(true);
 
+    // Daily counter increments on every kid-sent message, not on AI responses
+    const newCount = incrementDailyCount(kid.id);
+    setDailyCount(newCount);
+
     try {
-      const systemPrompt = buildSafetySystemPrompt(currentAgent, settings);
+      const systemPrompt = buildSafetySystemPrompt(currentAgent, settings, kid.name);
       const apiMessages = newMessages
         .filter(m => m.role === 'user' || m.role === 'assistant')
         .map(m => ({ role: m.role, content: m.content }));
@@ -72,10 +98,29 @@ export default function KidChat({ config, kid, agent, onBack }) {
         agentName: currentAgent.name,
       };
 
-      const finalMessages = [...newMessages, assistantMsg];
+      const withReply = [...newMessages, assistantMsg];
+
+      // Break reminders: inject a non-AI coach message after every Nth kid message
+      let finalMessages = withReply;
+      const every = settings.breakReminderEvery || 0;
+      if (every > 0 && newCount > 0 && newCount % every === 0) {
+        const useEmojis = settings.useEmojis !== false;
+        const breakMsg = {
+          role: 'assistant',
+          kind: 'break-reminder',
+          content: useEmojis
+            ? `🌈 Time for a quick break, ${kid.name}! Stretch, drink some water, look out the window — then come back whenever you're ready.`
+            : `Time for a quick break, ${kid.name}. Stretch, drink some water, look out the window, then come back when you're ready.`,
+          timestamp: Date.now() + 1,
+          agentName: 'Break reminder',
+        };
+        finalMessages = [...withReply, breakMsg];
+      }
+
       setMessages(finalMessages);
 
-      // Save to history if enabled
+      // Save to history if enabled (don't persist the local break-reminder bubble —
+      // it's UI-only and would be confusing in an export)
       if (settings.chatStorage === 'local') {
         const existing = loadChats(kid.id);
         saveChats(kid.id, [...existing, userMsg, assistantMsg]);
@@ -99,7 +144,7 @@ export default function KidChat({ config, kid, agent, onBack }) {
   };
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-font-size={settings.fontSize || 'normal'}>
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={onBack}>←</button>
         <button className={styles.agentInfo} onClick={() => agents.length > 1 && setShowAgentPicker(true)}>
@@ -133,17 +178,26 @@ export default function KidChat({ config, kid, agent, onBack }) {
       )}
 
       <div className={styles.messages}>
-        {messages.map((msg, i) => (
-          <div key={i} className={`${styles.bubble} ${msg.role === 'user' ? styles.bubbleUser : styles.bubbleAgent}`}>
-            {msg.role === 'assistant' && (
-              <div className={styles.bubbleAgent_emoji}>{currentAgent.emoji}</div>
-            )}
-            <div className={`${styles.bubbleContent} ${msg.role === 'user' ? styles.bubbleContentUser : styles.bubbleContentAgent}`}
-              style={msg.role === 'assistant' ? { '--agent-color': currentAgent.color } : {}}>
-              <div className={styles.bubbleText}>{renderContent(msg.content)}</div>
+        {messages.map((msg, i) => {
+          if (msg.kind === 'break-reminder') {
+            return (
+              <div key={i} className={styles.breakReminder}>
+                <div className={styles.breakReminderText}>{msg.content}</div>
+              </div>
+            );
+          }
+          return (
+            <div key={i} className={`${styles.bubble} ${msg.role === 'user' ? styles.bubbleUser : styles.bubbleAgent}`}>
+              {msg.role === 'assistant' && (
+                <div className={styles.bubbleAgent_emoji}>{currentAgent.emoji}</div>
+              )}
+              <div className={`${styles.bubbleContent} ${msg.role === 'user' ? styles.bubbleContentUser : styles.bubbleContentAgent}`}
+                style={msg.role === 'assistant' ? { '--agent-color': currentAgent.color } : {}}>
+                <div className={styles.bubbleText}>{renderContent(msg.content)}</div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {loading && (
           <div className={styles.bubble}>
@@ -172,11 +226,12 @@ export default function KidChat({ config, kid, agent, onBack }) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={`Ask ${currentAgent.name} anything...`}
+          placeholder={limitReached ? "You've used today's chats — see you tomorrow!" : `Ask ${currentAgent.name} anything...`}
           rows={1}
           maxLength={500}
+          disabled={limitReached}
         />
-        <button className={styles.sendBtn} onClick={send} disabled={!input.trim() || loading}
+        <button className={styles.sendBtn} onClick={send} disabled={!input.trim() || loading || limitReached}
           style={{ background: currentAgent.color }}>
           {loading ? '...' : '→'}
         </button>

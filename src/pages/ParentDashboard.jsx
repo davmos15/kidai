@@ -622,6 +622,22 @@ function AgentEditor({ agent, apiKeys, onSave, onCancel }) {
           <textarea className="input" value={a.systemPrompt} onChange={e => setA(p => ({ ...p, systemPrompt: e.target.value }))}
             placeholder="You are a friendly AI tutor for kids..." rows={8} style={{ resize: 'vertical', lineHeight: 1.6 }} />
         </div>
+
+        <div className={styles.settingsCard}>
+          <h3>Behaviour</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '8px 0' }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>🎓 Tutor mode — never give direct answers</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                Guides the child via hints, leading questions, and steps instead of handing out answers. Great for homework/maths agents.
+              </div>
+            </div>
+            <label className="toggle" style={{ flexShrink: 0 }}>
+              <input type="checkbox" checked={!!a.tutorMode} onChange={e => setA(p => ({ ...p, tutorMode: e.target.checked }))} />
+              <span className="toggle-slider" />
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   );
