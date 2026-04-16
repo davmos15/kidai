@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DEFAULT_CONFIG, PRESET_AGENTS, saveConfig, generateId, DEFAULT_KID_SAFETY, hydratePreset, pickProviderForAgent } from '../utils/storage';
 import SecretInput from '../components/SecretInput';
+import SafetyPanel from '../components/SafetyPanel';
 import styles from './Setup.module.css';
 
 const PROVIDERS = [
@@ -15,9 +16,10 @@ export default function Setup({ onComplete }) {
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const [apiKeys, setApiKeys] = useState({ anthropic: '', openai: '', gemini: '' });
-  const [kids, setKids] = useState([{ id: generateId(), name: '', emoji: '🧒', agentIds: [] }]);
+  const [kids, setKids] = useState([{ id: generateId(), name: '', emoji: '🧒', agentIds: [], safety: { ...DEFAULT_KID_SAFETY } }]);
   const [selectedAgents, setSelectedAgents] = useState([]);
   const [error, setError] = useState('');
+  const [expandedKidSettings, setExpandedKidSettings] = useState(null);
 
   const steps = ['Welcome', 'Parent PIN', 'API Keys', 'Add Kids', 'Choose Agents', 'Done'];
 
@@ -53,7 +55,13 @@ export default function Setup({ onComplete }) {
       ...DEFAULT_CONFIG,
       parentPin: pin,
       apiKeys,
-      kids: kids.map(k => ({ ...k, agentIds: selectedAgents, safety: { ...DEFAULT_KID_SAFETY } })),
+      // Preserve any per-kid safety the parent set during Setup; fall back
+      // to DEFAULT_KID_SAFETY (which inherits from global) for untouched kids.
+      kids: kids.map(k => ({
+        ...k,
+        agentIds: selectedAgents,
+        safety: k.safety || { ...DEFAULT_KID_SAFETY },
+      })),
       agents: PRESET_AGENTS
         .filter(a => selectedAgents.includes(a.id))
         .map(a => hydratePreset(a, apiKeys)),
@@ -67,7 +75,7 @@ export default function Setup({ onComplete }) {
     setSelectedAgents(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]);
   };
 
-  const addKid = () => setKids(prev => [...prev, { id: generateId(), name: '', emoji: '🧒', agentIds: [] }]);
+  const addKid = () => setKids(prev => [...prev, { id: generateId(), name: '', emoji: '🧒', agentIds: [], safety: { ...DEFAULT_KID_SAFETY } }]);
   const updateKid = (id, field, val) => setKids(prev => prev.map(k => k.id === id ? { ...k, [field]: val } : k));
   const removeKid = (id) => setKids(prev => prev.filter(k => k.id !== id));
 
@@ -148,27 +156,69 @@ export default function Setup({ onComplete }) {
           {step === 3 && (
             <div className={styles.section}>
               <h2>Add Your Kids</h2>
-              <p>Add each child who will use KidAI. You can change this later.</p>
-              {kids.map((kid, i) => (
-                <div key={kid.id} className={styles.kidRow}>
-                  <select className={`input ${styles.emojiSelect}`} value={kid.emoji} onChange={e => updateKid(kid.id, 'emoji', e.target.value)}>
-                    {KID_EMOJIS.map(e => <option key={e} value={e}>{e}</option>)}
-                  </select>
-                  <input
-                    className="input"
-                    value={kid.name}
-                    onChange={e => updateKid(kid.id, 'name', e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && kid.name.trim()) { e.preventDefault(); nextStep(); } }}
-                    placeholder={`Child ${i + 1}'s name`}
-                    style={{ flex: 1 }}
-                    autoFocus={i === 0}
-                  />
-                  {kids.length > 1 && (
-                    <button className="btn btn-danger" onClick={() => removeKid(kid.id)} style={{ padding: '10px 14px' }}>✕</button>
-                  )}
-                </div>
-              ))}
-              <button className="btn btn-secondary" onClick={addKid} style={{ marginTop: 8, width: '100%' }}>+ Add Another Child</button>
+              <p>Add each child who will use KidAI. Extra safety settings are optional — you can adjust them here or leave them to inherit the global defaults (and tweak later from the Parent Dashboard).</p>
+              {kids.map((kid, i) => {
+                const isOpen = expandedKidSettings === kid.id;
+                const isCustom = kid.safety && kid.safety.useGlobal === false;
+                return (
+                  <div key={kid.id} className={styles.kidBlock}>
+                    <div className={styles.kidRow}>
+                      <select className={`input ${styles.emojiSelect}`} value={kid.emoji} onChange={e => updateKid(kid.id, 'emoji', e.target.value)} aria-label="Emoji">
+                        {KID_EMOJIS.map(e => <option key={e} value={e}>{e}</option>)}
+                      </select>
+                      <input
+                        className="input"
+                        value={kid.name}
+                        onChange={e => updateKid(kid.id, 'name', e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && kid.name.trim()) { e.preventDefault(); nextStep(); } }}
+                        placeholder={`Child ${i + 1}'s name`}
+                        style={{ flex: 1, minWidth: 0 }}
+                        autoFocus={i === 0}
+                      />
+                      <button
+                        type="button"
+                        className={`btn btn-ghost ${styles.extraBtn}`}
+                        onClick={() => setExpandedKidSettings(isOpen ? null : kid.id)}
+                        title="Extra safety settings"
+                      >
+                        ⚙️ {isOpen ? 'Close' : 'Extra'}
+                      </button>
+                      {kids.length > 1 && (
+                        <button type="button" className="btn btn-danger" onClick={() => { if (expandedKidSettings === kid.id) setExpandedKidSettings(null); removeKid(kid.id); }} style={{ padding: '10px 12px' }}>✕</button>
+                      )}
+                    </div>
+
+                    {isOpen && (
+                      <div className={styles.extraPanel}>
+                        <div className={styles.extraHeader}>
+                          <div>
+                            <div style={{ fontWeight: 800, fontSize: 14 }}>Extra safety for {kid.name || `Child ${i + 1}`}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                              {isCustom
+                                ? 'Using custom settings — global safety rules do not apply to this child.'
+                                : 'Using global safety rules. Turn off the toggle to customise for just this child.'}
+                            </div>
+                          </div>
+                          <label className="toggle" style={{ flexShrink: 0 }}>
+                            <input type="checkbox" checked={kid.safety?.useGlobal !== false}
+                              onChange={e => updateKid(kid.id, 'safety', { ...(kid.safety || DEFAULT_KID_SAFETY), useGlobal: e.target.checked })} />
+                            <span className="toggle-slider" />
+                          </label>
+                        </div>
+
+                        {isCustom && (
+                          <SafetyPanel
+                            settings={kid.safety}
+                            onChange={(newS) => updateKid(kid.id, 'safety', { ...newS, useGlobal: false })}
+                            isKidOverride={true}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <button type="button" className="btn btn-secondary" onClick={addKid} style={{ marginTop: 8, width: '100%' }}>+ Add Another Child</button>
             </div>
           )}
 
