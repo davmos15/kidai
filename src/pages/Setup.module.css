@@ -187,7 +187,9 @@
   padding-bottom: 0;
 }
 
-.emojiSelect {
+/* Specificity bump via :global(.input) so we beat the global .input rule
+   regardless of CSS bundling order. */
+.emojiSelect:global(.input) {
   width: 5%;
   min-width: 40px;
   padding: 8px 4px;

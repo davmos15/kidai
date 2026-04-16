@@ -188,7 +188,10 @@
   align-items: center;
 }
 
-.emojiSelect {
+/* :global(.input) combined with the scoped class bumps specificity to
+   (0,0,2,0) so we always win over the plain .input { width: 100% } global
+   regardless of bundled-CSS order. */
+.emojiSelect:global(.input) {
   width: 5%;
   min-width: 40px;
   padding: 8px 4px;
