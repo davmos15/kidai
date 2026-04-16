@@ -189,7 +189,8 @@
 }
 
 .emojiSelect {
-  width: 52px;
+  width: 5%;
+  min-width: 40px;
   padding: 8px 4px;
   text-align: center;
   font-size: 22px;
