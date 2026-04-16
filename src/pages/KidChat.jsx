@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { callAI, buildSafetySystemPrompt, filterResponse, loadChats, saveChats, resolveKidSettings } from '../utils/storage';
+import { callAI, buildSafetySystemPrompt, filterResponse, loadChats, saveChats, resolveKidSettings, sanitizeInput } from '../utils/storage';
 import styles from './KidChat.module.css';
 
 export default function KidChat({ config, kid, agent, onBack }) {
@@ -36,7 +36,7 @@ export default function KidChat({ config, kid, agent, onBack }) {
   };
 
   const send = async () => {
-    const trimmed = input.trim();
+    const trimmed = sanitizeInput(input);
     if (!trimmed || loading) return;
 
     if (isBlocked(trimmed)) {

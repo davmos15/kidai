@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { saveConfig, loadChats, exportChats, exportConfig, exportConfigWithKeys, importConfig, generateId, PRESET_AGENTS, AGE_LEVELS, DEFAULT_KID_SAFETY } from '../utils/storage';
+import { useState, useRef, useEffect } from 'react';
+import { saveConfig, loadChats, exportChats, exportConfig, exportConfigWithKeys, importConfig, generateId, PRESET_AGENTS, AGE_LEVELS, DEFAULT_KID_SAFETY, FALLBACK_MODELS, fetchModels } from '../utils/storage';
 import styles from './ParentDashboard.module.css';
 
 const PROVIDERS = [
@@ -7,12 +7,6 @@ const PROVIDERS = [
   { id: 'openai', name: 'OpenAI (GPT)', placeholder: 'sk-...', docs: 'https://platform.openai.com/api-keys' },
   { id: 'gemini', name: 'Google Gemini', placeholder: 'AIza...', docs: 'https://aistudio.google.com/app/apikey' },
 ];
-
-const MODELS = {
-  anthropic: ['claude-3-haiku-20240307', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'],
-  openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'],
-  gemini: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'],
-};
 
 const KID_EMOJIS = ['🧒', '👦', '👧', '👶', '🧑', '🌟', '🦄', '🐱', '🐶', '🐸', '🦊', '🐼'];
 
@@ -642,6 +636,25 @@ function AgentEditor({ agent, apiKeys, onSave, onCancel }) {
   const COLORS = ['#e86f2c', '#2c7be8', '#2a9d63', '#e8a62c', '#7c4de8', '#d94f3d', '#1a9bba'];
   const hasKey = apiKeys[a.provider]?.trim().length > 0;
 
+  // Dynamic model listing — fetched from the provider when a key is present.
+  // Falls back to a known-good list; user can also type a custom model ID via the datalist.
+  const [models, setModels] = useState(FALLBACK_MODELS[a.provider] || []);
+  const [modelStatus, setModelStatus] = useState('fallback'); // 'fallback' | 'loading' | 'live' | 'error'
+
+  useEffect(() => {
+    let cancelled = false;
+    setModels(FALLBACK_MODELS[a.provider] || []);
+    const key = apiKeys[a.provider];
+    if (!key?.trim()) { setModelStatus('fallback'); return; }
+    setModelStatus('loading');
+    fetchModels(a.provider, key).then(list => {
+      if (cancelled) return;
+      if (list && list.length) { setModels(list); setModelStatus('live'); }
+      else { setModelStatus('error'); }
+    });
+    return () => { cancelled = true; };
+  }, [a.provider, apiKeys]);
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -670,15 +683,29 @@ function AgentEditor({ agent, apiKeys, onSave, onCancel }) {
         </div>
         <div className={styles.settingsCard}>
           <h3>AI Model</h3>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-            <select className="input" value={a.provider} onChange={e => setA(p => ({ ...p, provider: e.target.value, model: MODELS[e.target.value][0] }))}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
+            <select className="input" value={a.provider} onChange={e => setA(p => ({ ...p, provider: e.target.value, model: (FALLBACK_MODELS[e.target.value] || [])[0] || '' }))}>
               {['anthropic', 'openai', 'gemini'].map(p => <option key={p} value={p}>{p}</option>)}
             </select>
-            <select className="input" value={a.model} onChange={e => setA(p => ({ ...p, model: e.target.value }))}>
-              {(MODELS[a.provider] || []).map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+            <input
+              className="input"
+              list={`models-${a.provider}`}
+              value={a.model}
+              onChange={e => setA(p => ({ ...p, model: e.target.value }))}
+              placeholder="Model ID"
+              style={{ flex: 1 }}
+            />
+            <datalist id={`models-${a.provider}`}>
+              {models.map(m => <option key={m} value={m} />)}
+            </datalist>
           </div>
-          {!hasKey && <div className={styles.keyWarning}>⚠️ No API key for {a.provider} — add one in API Keys</div>}
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            {modelStatus === 'loading' && <>⏳ Fetching latest models…</>}
+            {modelStatus === 'live' && <>✓ {models.length} models loaded from {a.provider} — or type any model ID</>}
+            {modelStatus === 'error' && <>⚠️ Couldn't fetch live list (check key) — suggestions are a known-good fallback</>}
+            {modelStatus === 'fallback' && <>💡 Add an API key to fetch the live model list. You can also type any model ID.</>}
+          </div>
+          {!hasKey && <div className={styles.keyWarning} style={{ marginTop: 8 }}>⚠️ No API key for {a.provider} — add one in API Keys</div>}
         </div>
         <div className={styles.settingsCard}>
           <h3>System Prompt</h3>
