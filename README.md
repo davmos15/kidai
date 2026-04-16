@@ -1,139 +1,130 @@
 # 🌟 KidAI — Safe AI Companions for Kids
 
-A free, privacy-first web app where parents set up safe AI chat agents for their children. All data stays on the parent's device — no backend, no accounts, no subscription.
+> **Try it now:** [safekidai.netlify.app](https://safekidai.netlify.app)
+
+A free, privacy-first web app where parents set up safe AI chat agents for their children. No accounts, no subscription, no servers — everything lives in your browser.
 
 ---
 
-## ✨ Features
+## What it is
 
-### Parent Dashboard
-- 🔒 PIN-protected parent access
-- 👨‍👩‍👧 Add multiple children with custom names & avatars
-- 🤖 Create custom AI agents or use presets (Maths Mate, Story Buddy, Science Explorer, Homework Helper, Fun Buddy)
-- 🛡️ Global safety controls:
-  - Block all links & URLs (agents won't send them; any that slip through are non-clickable)
-  - Block video & image suggestions
-  - Restricted topic categories (Violence, Adult Content, Drugs, Gambling, Politics, Horror) — toggle on/off
-  - Custom blocked words/phrases list
-  - Max response length control
-- 💬 View and export kids' chat history
-- 🔑 Connect your own API keys (Anthropic, OpenAI, Gemini)
+KidAI lets you create custom AI "friends" your child can chat with, with parent-controlled safety rails on top of Anthropic (Claude), OpenAI (GPT), or Google Gemini.
 
-### Kid Chat UI
-- Friendly, colourful interface designed for children
-- Per-kid agent assignment (each child only sees their agents)
-- Agent switcher if multiple agents are assigned
-- Animated typing indicator
-- Input filtering — blocked words are caught before sending
-- Output filtering — links stripped if blocking is enabled
+- **Parents set everything up once** — PIN, children, agents, safety rules.
+- **Kids pick who they want to chat with** from a friendly picker, then chat in a colourful interface designed for them.
+- **All data stays on your device** — your API keys, your kids' names, their chat history. KidAI has no backend at all.
 
 ---
 
-## 🚀 Deploying to Netlify (Free)
+## Getting started (2 minutes)
 
-### Option 1: Via GitHub (Recommended)
+1. Go to **[safekidai.netlify.app](https://safekidai.netlify.app)** and click **Parent / Setup**.
+2. Follow the 5-step wizard:
+   - Choose a **Parent PIN** (keeps kids out of settings)
+   - *(Optional)* Paste an **API key** from one of the AI providers — or skip and add it later
+   - Add your **children** (name, emoji, optional extra safety per kid)
+   - Pick the **AI agents** they can use (Maths Mate, Story Buddy, Science Explorer, etc., or make your own)
+3. That's it. Your child taps **I'm a Kid!** from the home screen and starts chatting.
 
-1. Create a new GitHub repo and push this project folder to it
-2. Go to [netlify.com](https://netlify.com) → **Add new site** → **Import from Git**
-3. Select your repo
-4. Set:
-   - **Build command:** `npm run build`
-   - **Publish directory:** `dist`
-5. Click **Deploy** — done!
-
-### Option 2: Drag & Drop
-
-1. Run `npm run build` locally
-2. Go to [netlify.com/drop](https://app.netlify.com/drop)
-3. Drag the `dist/` folder onto the page
-4. Instant deploy — no account needed for a temporary URL
+You can always come back to the **Parent Dashboard** (bottom-right of the home screen) to add agents, edit safety rules, view chat history, or export a backup.
 
 ---
 
-## 🔑 Getting API Keys
+## What parents can control
 
-You need at least one API key to use KidAI. All are pay-per-use (no subscription).
+### Per-child and global safety rails
+- **Reading level** — 7-point slider from age 4 to 16+; sets vocabulary and sentence complexity
+- **Content filters** — block links, images, videos, emojis (any combination)
+- **Personal info protection** — AI never asks for or repeats surnames, addresses, phone numbers, emails, or school names; phone/email patterns in the child's messages are blocked before they're sent
+- **Restricted topics** — violence, adult content, drugs, gambling, politics, horror — toggle categories on/off
+- **Custom blocked words** — your own list on top of the defaults
+- **Usage limits** — cap messages per day (resets at midnight); show break-reminder nudges every N messages
+- **Font size** — kid-facing chat can be small / normal / large / extra-large for early readers
 
-| Provider | Where to Get Key | Cheapest Model | Est. Cost per Chat |
-|----------|-----------------|----------------|-------------------|
-| **Anthropic (Claude)** | [console.anthropic.com](https://console.anthropic.com/) | claude-3-haiku | ~$0.001 |
-| **OpenAI (GPT)** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | gpt-4o-mini | ~$0.001 |
-| **Google Gemini** | [aistudio.google.com](https://aistudio.google.com/app/apikey) | gemini-1.5-flash | Free tier available |
+### Per-agent
+- **Personality** — write any system prompt, or start from a preset
+- **Tutor mode** — agent never gives direct answers; always guides with hints and questions (great for homework)
+- **AI provider + model** — any connected provider, any model the provider offers (live-fetched, or type a custom ID)
 
-> 💡 **Tip:** Google Gemini has a generous free tier — great for getting started at zero cost.
+### Chat history
+- View or export a child's full chat history from the dashboard as JSON
+- Optionally turn off local storage so chats aren't kept at all
 
----
-
-## 💾 Data & Privacy
-
-- **All configuration** (API keys, kids, agents, settings) is stored in your browser's `localStorage`
-- **API keys** are only sent directly to the respective AI provider when making chat requests — never to any other server
-- **Chat history** is stored in `localStorage` (on the device used by the child) if you enable it
-- **Nothing is stored on any server** — this app has no backend
-- **Exporting chats** downloads a `.json` file to your device
-
-### Important Notes
-- If a child uses a different device/browser, chat history won't sync (it's device-local)
-- Clearing browser data will erase all settings — export your config if needed
-- For multi-device use, you'll need to re-enter settings on each device
+### Backup & restore
+- Export your full configuration (with or without API keys) as a JSON file
+- Import it on another device or after clearing your browser
 
 ---
 
-## 🛠️ Local Development
+## Getting AI API keys
+
+You need at least one key to let kids actually chat. All are pay-per-use with no subscription:
+
+| Provider | Where to get a key | Cheapest model | Notes |
+|----------|-------------------|----------------|-------|
+| **Anthropic (Claude)** | [console.anthropic.com](https://console.anthropic.com/) | claude-3-5-haiku | ~$0.001 per chat |
+| **OpenAI (GPT)** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | gpt-4o-mini | ~$0.001 per chat |
+| **Google Gemini** | [aistudio.google.com](https://aistudio.google.com/app/apikey) | gemini-2.5-flash | Generous free tier |
+
+> 💡 **Tip:** Gemini has a free tier — a good no-cost way to try KidAI. For most families, a **dedicated key with a monthly spend cap** (all three providers support this in their billing settings) is the safest setup, so a lost or shared device can't rack up charges.
+
+---
+
+## Privacy
+
+- **Zero backend.** KidAI is a static web page. There is no server that stores your data.
+- **Your API keys** only ever travel between your browser and the AI provider you chose. They're kept in your browser's `localStorage` and nowhere else.
+- **Chat history** is per-device. Nothing is uploaded anywhere.
+- **No analytics, no accounts, no cookies** beyond what your browser normally does.
+
+### Important things to know
+
+- If your child uses a different device, chat history doesn't follow them. Configuration can be moved via **Export → Import** in the Parent Dashboard.
+- Clearing browser data will erase KidAI's settings — export a backup first if that would hurt.
+- API keys stored in localStorage can theoretically be read by anyone with access to the device. Treat the device like you'd treat a saved password.
+
+---
+
+## Frequently asked questions
+
+**Is this really free?**
+The app itself is free. The AI API calls cost whatever your provider charges (usually fractions of a cent per chat). You control your own spend by managing your own keys — KidAI never touches money.
+
+**Does it work on a tablet or phone?**
+Yes — it's a standard responsive web app. Works in any modern browser.
+
+**Can my child break the safety rules by typing "ignore previous instructions"?**
+The app has layered defences: a robust system prompt that names known jailbreak patterns by name, input sanitisation that strips control characters and hidden unicode, and post-response filters. No AI safety system is 100% foolproof, so the app assumes parental supervision rather than replacing it.
+
+**What if the AI says something inappropriate anyway?**
+Enable chat history in the Parent Dashboard and review occasionally. You can also add custom blocked words and restrict additional topic categories. If something slips through, report it to the AI provider — they take that feedback seriously.
+
+**Can I use this across multiple devices?**
+Right now only via manual export/import. Automatic sync isn't built yet (it would require a server and break the zero-backend design).
+
+---
+
+## Disclaimer
+
+KidAI is a proof-of-concept tool. While it implements multiple layers of content filtering, no AI safety system is perfect. Use it as a supplement to parental supervision, not a replacement. Check in on your child's chats periodically.
+
+---
+
+## For developers
+
+KidAI is open source — [view the code on GitHub](https://github.com/davmos15/kidai).
+
+The stack is React 18 + Vite, no backend. If you want to run it locally:
 
 ```bash
-# Install dependencies
+git clone https://github.com/davmos15/kidai.git
+cd kidai
 npm install
-
-# Start dev server
 npm run dev
-
-# Build for production
-npm run build
 ```
 
-Requires Node.js 18+.
+Build a production bundle with `npm run build`; output lands in `dist/`. `netlify.toml` is pre-configured for Netlify deploys — connect the repo in the Netlify dashboard for automatic builds.
 
 ---
 
-## 📁 Project Structure
-
-```
-kidai/
-├── src/
-│   ├── pages/
-│   │   ├── LandingPage.jsx      # Entry point (Kid vs Parent split)
-│   │   ├── Setup.jsx            # First-time setup wizard
-│   │   ├── ParentDashboard.jsx  # Full parent management UI
-│   │   ├── KidSelect.jsx        # Kid chooser screen
-│   │   └── KidChat.jsx          # The chat interface kids use
-│   ├── utils/
-│   │   └── storage.js           # localStorage, AI API calls, safety filtering
-│   ├── App.jsx                  # Route management
-│   └── index.css                # Global design system
-├── netlify.toml                 # Netlify SPA redirect config
-└── index.html
-```
-
----
-
-## 🗺️ Roadmap Ideas
-
-- [ ] Agent-picker screen when a kid has multiple agents (currently defaults to first)
-- [ ] Per-kid safety setting overrides
-- [ ] PIN change from dashboard
-- [ ] Config export/import (JSON backup)
-- [ ] Voice input for younger kids
-- [ ] Reading level setting per agent
-- [ ] Session time limits
-- [ ] Daily message limits
-
----
-
-## ⚠️ Disclaimer
-
-KidAI is a proof-of-concept tool. While it implements multiple layers of content filtering, no AI safety system is 100% foolproof. Parents should periodically review chat history and use this as a supplement to, not a replacement for, parental supervision.
-
----
-
-Made with ❤️ for curious kids everywhere.
+Made with care for curious kids everywhere.
