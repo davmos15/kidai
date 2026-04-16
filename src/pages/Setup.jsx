@@ -36,10 +36,8 @@ export default function Setup({ onComplete }) {
       if (pin.length < 4) return setError('PIN must be at least 4 digits');
       if (pin !== pinConfirm) return setError('PINs do not match');
     }
-    if (step === 2) {
-      const hasKey = Object.values(apiKeys).some(k => k.trim().length > 0);
-      if (!hasKey) return setError('Please add at least one API key');
-    }
+    // API keys are optional — parents can skip this step and add keys later
+    // from the Parent Dashboard → API Keys tab.
     if (step === 3) {
       if (kids.some(k => !k.name.trim())) return setError('Please enter a name for each child');
     }
@@ -137,8 +135,8 @@ export default function Setup({ onComplete }) {
 
           {step === 2 && (
             <div className={styles.section}>
-              <h2>Connect API Keys</h2>
-              <p>Add at least one API key. Keys are stored locally on this device only.</p>
+              <h2>Connect API Keys <span style={{ fontSize: 14, color: 'var(--text-muted)', fontWeight: 600 }}>(optional)</span></h2>
+              <p>Add a key now to start chatting right away — or skip this and add one later from the Parent Dashboard → API Keys. Keys are stored locally on this device only.</p>
               {PROVIDERS.map(p => (
                 <div key={p.id} className={styles.providerCard}>
                   <div className={styles.providerHeader} style={{ borderColor: p.color }}>
@@ -233,8 +231,8 @@ export default function Setup({ onComplete }) {
                     ✓ Using <strong>{pick.provider}</strong> by default ({pick.model})
                   </div>
                 ) : (
-                  <div style={{ fontSize: 13, color: 'var(--red)', background: 'var(--red-light)', padding: '8px 12px', borderRadius: 10, marginBottom: 12, fontWeight: 600 }}>
-                    ⚠️ No API key set — go back to step 3 and add one
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', background: 'var(--surface2)', padding: '8px 12px', borderRadius: 10, marginBottom: 12, fontWeight: 600 }}>
+                    💡 No API key yet — you can skip this step and come back once a key is added in the Parent Dashboard.
                   </div>
                 )}
                 <div className={styles.agentGrid}>

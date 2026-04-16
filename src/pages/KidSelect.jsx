@@ -29,21 +29,27 @@ export default function KidSelect({ config, onSelect, onBack }) {
         <div className={styles.grid}>
           {config.kids.map(kid => {
             const agents = config.agents.filter(a => kid.agentIds.includes(a.id));
-            if (agents.length === 0) return null;
-
             const handleClick = () => {
-              if (agents.length === 1) {
-                onSelect(kid, agents[0]);
-              } else {
-                setPickingForKid(kid);
-              }
+              if (agents.length === 1) onSelect(kid, agents[0]);
+              else if (agents.length > 1) setPickingForKid(kid);
             };
 
             return (
-              <button key={kid.id} className={styles.kidCard} onClick={handleClick}>
+              <button
+                key={kid.id}
+                className={styles.kidCard}
+                onClick={handleClick}
+                disabled={agents.length === 0}
+                title={agents.length === 0 ? 'Ask a parent to finish setup' : ''}
+                style={agents.length === 0 ? { opacity: 0.55, cursor: 'not-allowed' } : {}}
+              >
                 <span className={styles.emoji}>{kid.emoji}</span>
                 <span className={styles.name}>{kid.name}</span>
-                <span className={styles.agents}>{agents.length} friend{agents.length !== 1 ? 's' : ''} waiting</span>
+                <span className={styles.agents}>
+                  {agents.length === 0
+                    ? 'No friends yet — ask a parent'
+                    : `${agents.length} friend${agents.length !== 1 ? 's' : ''} waiting`}
+                </span>
               </button>
             );
           })}

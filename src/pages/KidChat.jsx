@@ -21,13 +21,17 @@ export default function KidChat({ config, kid, agent, onBack }) {
   }, [messages, loading]);
 
   useEffect(() => {
-    // Greeting message
+    const useEmojis = settings.useEmojis !== false;
+    const greeting = useEmojis
+      ? `Hi ${kid.name}! 👋 I'm ${currentAgent.name} ${currentAgent.emoji} — I'm so excited to chat with you today! What would you like to explore?`
+      : `Hi ${kid.name}, I'm ${currentAgent.name}. I'm excited to chat with you today. What would you like to explore?`;
     setMessages([{
       role: 'assistant',
-      content: `Hi ${kid.name}! 👋 I'm ${currentAgent.name} ${currentAgent.emoji} — I'm so excited to chat with you today! What would you like to explore?`,
+      content: greeting,
       timestamp: Date.now(),
       agentName: currentAgent.name,
     }]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAgent]);
 
   const isBlocked = (text) => {

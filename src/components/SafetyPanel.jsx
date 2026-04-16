@@ -62,21 +62,25 @@ export default function SafetyPanel({ settings, onChange, isKidOverride = false 
       <div className={styles.settingsCard}>
         <h3>Content Controls</h3>
         {[
-          ['blockLinks', 'Block all links & URLs', "Agents won't send links, and any that appear won't be clickable"],
-          ['blockVideo', 'Block video suggestions', "Agents won't suggest or reference YouTube or other videos"],
-          ['blockImages', 'Block image suggestions', "Agents won't reference or suggest searching for images"],
-        ].map(([key, label, desc]) => (
-          <div key={key} className={styles.settingRow}>
-            <div>
-              <div className={styles.settingLabel}>{label}</div>
-              <div className={styles.settingDesc}>{desc}</div>
+          ['blockLinks', 'Block all links & URLs', "Agents won't send links, and any that appear won't be clickable", false],
+          ['blockVideo', 'Block video suggestions', "Agents won't suggest or reference YouTube or other videos", false],
+          ['blockImages', 'Block image suggestions', "Agents won't reference or suggest searching for images", false],
+          ['useEmojis', 'Use emojis in responses', 'When off, agents reply in plain text — no emojis, emoticons, or decorative symbols', true],
+        ].map(([key, label, desc, defaultOn]) => {
+          const current = settings[key] ?? defaultOn;
+          return (
+            <div key={key} className={styles.settingRow}>
+              <div>
+                <div className={styles.settingLabel}>{label}</div>
+                <div className={styles.settingDesc}>{desc}</div>
+              </div>
+              <label className="toggle">
+                <input type="checkbox" checked={!!current} onChange={e => updateSetting(key, e.target.checked)} />
+                <span className="toggle-slider" />
+              </label>
             </div>
-            <label className="toggle">
-              <input type="checkbox" checked={!!settings[key]} onChange={e => updateSetting(key, e.target.checked)} />
-              <span className="toggle-slider" />
-            </label>
-          </div>
-        ))}
+          );
+        })}
         <div className={styles.settingRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
           <div className={styles.settingLabel}>Max response length (words)</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

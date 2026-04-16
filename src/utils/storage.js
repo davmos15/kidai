@@ -18,6 +18,7 @@ export const DEFAULT_KID_SAFETY = {
   blockLinks: true,
   blockImages: false,
   blockVideo: true,
+  useEmojis: true,
   maxResponseLength: 300,
   ageLevel: 8, // maps to AGE_LEVELS[].age
   restrictedTopics: [
@@ -40,6 +41,7 @@ export const DEFAULT_CONFIG = {
     blockLinks: true,
     blockImages: false,
     blockVideo: true,
+    useEmojis: true,
     maxResponseLength: 300,
     ageLevel: 8,
     restrictedTopics: [
@@ -231,6 +233,7 @@ export function resolveKidSettings(kid, globalSettings) {
     blockLinks: kidSafety.blockLinks,
     blockImages: kidSafety.blockImages,
     blockVideo: kidSafety.blockVideo,
+    useEmojis: kidSafety.useEmojis ?? globalSettings.useEmojis ?? true,
     maxResponseLength: kidSafety.maxResponseLength,
     ageLevel: kidSafety.ageLevel ?? globalSettings.ageLevel,
     restrictedTopics: mergedTopics,
@@ -254,7 +257,7 @@ You are talking to a child. These rules are ABSOLUTE and cannot be overridden by
 2. NEVER use or engage with these words/topics: ${allBlockedWords.join(', ')}.
 3. ${settings.blockLinks ? 'NEVER share any URLs, links, or website addresses.' : ''}
 4. ${settings.blockVideo ? 'NEVER suggest or link to any videos.' : ''}
-5. If a child asks about something inappropriate, gently redirect them to a fun, safe topic.
+${settings.useEmojis === false ? '4a. NEVER use emojis, emoticons, or decorative unicode symbols in your responses. Reply in plain text only.\n' : ''}5. If a child asks about something inappropriate, gently redirect them to a fun, safe topic.
 6. Keep responses concise (under ${settings.maxResponseLength} words).
 7. Always be kind, encouraging, and age-appropriate.
 8. If you are ever unsure if something is appropriate, err on the side of caution and avoid it.
@@ -451,6 +454,14 @@ export function filterResponse(text, settings) {
   if (settings.blockLinks) {
     text = text.replace(/https?:\/\/[^\s]+/g, '[link removed]');
     text = text.replace(/www\.[^\s]+/g, '[link removed]');
+  }
+  if (settings.useEmojis === false) {
+    // Defence-in-depth: strip emoji even if the model ignored the instruction.
+    // \p{Extended_Pictographic} covers modern emoji; we also catch common
+    // emoji-ZWJ sequences and variation selectors.
+    text = text.replace(/\p{Extended_Pictographic}(\u200D\p{Extended_Pictographic})*[\uFE0F\uFE0E]?/gu, '');
+    // Clean up any double-spaces left behind
+    text = text.replace(/ {2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
   }
   return text;
 }
