@@ -277,3 +277,16 @@
   gap: 12px;
   margin-top: 24px;
 }
+
+@media (max-width: 480px) {
+  .body { padding: 20px 16px; }
+  .steps { gap: 2px; padding: 14px 12px; }
+  .stepLabel { font-size: 10px; }
+  .section h2 { font-size: 22px; }
+  .agentGrid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .agentEmoji { font-size: 26px; }
+  .agentDesc { font-size: 10px; }
+  .welcome h1 { font-size: 26px; }
+  .bigEmoji { font-size: 56px; }
+  .features { font-size: 14px; padding: 16px; }
+}

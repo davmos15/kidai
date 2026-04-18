@@ -287,3 +287,23 @@
 .page[data-font-size="xlarge"] .bubbleText { font-size: 22px; line-height: 1.5; }
 .page[data-font-size="xlarge"] .input { font-size: 20px; }
 .page[data-font-size="xlarge"] .breakReminderText { font-size: 19px; }
+
+@media (max-width: 480px) {
+  .header { gap: 8px; padding: 10px 12px; }
+  .agentEmoji { font-size: 28px; }
+  .agentName { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+  .agentDesc { display: none; }
+  .switchHint { display: none; }
+  .kidBadge { padding: 4px 10px; font-size: 12px; max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+  .backBtn { width: 34px; height: 34px; font-size: 16px; }
+
+  .messages { padding: 12px; }
+  .bubble { max-width: 92%; }
+  .bubbleContent { padding: 10px 12px; font-size: 14px; }
+
+  .inputArea { padding: 8px 10px; gap: 6px; }
+  .input { padding: 10px 12px; font-size: 14px; }
+  .sendBtn { width: 42px; height: 42px; font-size: 18px; }
+
+  .breakReminder { max-width: 90%; padding: 10px 14px; }
+}

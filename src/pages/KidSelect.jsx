@@ -47,8 +47,8 @@ export default function KidSelect({ config, onSelect, onBack }) {
                 <span className={styles.name}>{kid.name}</span>
                 <span className={styles.agents}>
                   {agents.length === 0
-                    ? 'No friends yet — ask a parent'
-                    : `${agents.length} friend${agents.length !== 1 ? 's' : ''} waiting`}
+                    ? 'No agents yet — ask a parent'
+                    : `${agents.length} agent${agents.length !== 1 ? 's' : ''} ready`}
                 </span>
               </button>
             );
