@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { saveConfig, loadChats, exportChats, exportConfig, exportConfigWithKeys, importConfig, generateId, PRESET_AGENTS, AGE_LEVELS, DEFAULT_KID_SAFETY, FALLBACK_MODELS, fetchModels, hydratePreset, pickProviderForAgent } from '../utils/storage';
 import SecretInput from '../components/SecretInput';
 import SafetyPanel from '../components/SafetyPanel';
+import MessageContent from '../components/MessageContent';
 import styles from './ParentDashboard.module.css';
 
 const PROVIDERS = [
@@ -670,7 +671,9 @@ function ChatViewer({ kid, chats, onBack, onExport }) {
               {msgs.map((msg, i) => (
                 <div key={i} className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatUser : styles.chatAgent}`}>
                   <span className={styles.chatRole}>{msg.role === 'user' ? kid.name : msg.agentName || 'Agent'}</span>
-                  <span className={styles.chatText}>{msg.content}</span>
+                  <span className={styles.chatText}>
+                    {msg.role === 'user' ? msg.content : <MessageContent text={msg.content} />}
+                  </span>
                   <span className={styles.chatTime}>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
               ))}

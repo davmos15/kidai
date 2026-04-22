@@ -170,6 +170,125 @@ export function saveChats(kidId, chats) {
   localStorage.setItem(`${KEYS.chats}_${kidId}`, JSON.stringify(chats));
 }
 
+// Append one or more new messages to a kid's chat history without rewriting
+// the whole blob. All new messages should carry a sessionId so they can be
+// grouped by conversation in the sidebar.
+export function appendChats(kidId, newMessages) {
+  const existing = loadChats(kidId);
+  saveChats(kidId, [...existing, ...newMessages]);
+}
+
+// Group messages into "sessions" for the chat-history sidebar. Each session
+// is a contiguous conversation the child had with a specific agent.
+//
+// Migration: messages written before sessionId existed are grouped by
+// 15-minute gaps (a practical proxy for "one sitting") so legacy history
+// still renders usefully instead of appearing as one giant blob.
+export function loadSessions(kidId) {
+  const msgs = loadChats(kidId);
+  if (!msgs.length) return [];
+
+  const GAP_MS = 15 * 60 * 1000;
+  const sessions = [];
+  let current = null;
+
+  for (const m of msgs) {
+    const sid = m.sessionId;
+    const shouldStartNew =
+      !current ||
+      (sid && sid !== current.id) ||
+      (!sid && (m.timestamp - current.lastAt) > GAP_MS);
+
+    if (shouldStartNew) {
+      current = {
+        id: sid || `legacy-${m.timestamp}`,
+        isLegacy: !sid,
+        agentName: m.agentName || null,
+        startedAt: m.timestamp,
+        lastAt: m.timestamp,
+        messages: [m],
+        title: null,
+      };
+      sessions.push(current);
+    } else {
+      current.messages.push(m);
+      current.lastAt = m.timestamp;
+      if (!current.agentName && m.agentName) current.agentName = m.agentName;
+    }
+  }
+
+  // Title each session from its first user message (AI greetings look
+  // identical across sessions so we skip them).
+  for (const s of sessions) {
+    const firstUser = s.messages.find(m => m.role === 'user');
+    s.title = firstUser
+      ? firstUser.content.slice(0, 48).replace(/\s+/g, ' ').trim() + (firstUser.content.length > 48 ? '…' : '')
+      : 'New chat';
+    s.messageCount = s.messages.length;
+  }
+
+  // Most recent first
+  return sessions.sort((a, b) => b.lastAt - a.lastAt);
+}
+
+// Load messages for one specific session. Returns them in timestamp order
+// so they render correctly.
+export function loadSessionMessages(kidId, sessionId) {
+  const msgs = loadChats(kidId);
+  if (!sessionId) return [];
+  if (sessionId.startsWith('legacy-')) {
+    // Legacy session: we group by 15-min gap at display time; reconstruct
+    // the same window the sidebar used when it assigned this synthetic id.
+    const anchorTs = parseInt(sessionId.slice('legacy-'.length), 10);
+    if (isNaN(anchorTs)) return [];
+    const GAP_MS = 15 * 60 * 1000;
+    const result = [];
+    let inWindow = false;
+    let lastTs = null;
+    for (const m of msgs) {
+      if (m.sessionId) continue;
+      if (!inWindow && m.timestamp === anchorTs) { inWindow = true; result.push(m); lastTs = m.timestamp; continue; }
+      if (inWindow) {
+        if ((m.timestamp - lastTs) > GAP_MS) break;
+        result.push(m);
+        lastTs = m.timestamp;
+      }
+    }
+    return result;
+  }
+  return msgs.filter(m => m.sessionId === sessionId);
+}
+
+// Delete a session from a kid's chat history. Used by the sidebar's trash
+// button. Legacy sessions (timestamp-grouped) are deleted by removing every
+// message in the 15-minute window starting at the anchor.
+export function deleteSession(kidId, sessionId) {
+  const msgs = loadChats(kidId);
+  let kept;
+  if (sessionId.startsWith('legacy-')) {
+    const anchorTs = parseInt(sessionId.slice('legacy-'.length), 10);
+    if (isNaN(anchorTs)) return;
+    const GAP_MS = 15 * 60 * 1000;
+    // Re-walk the legacy grouping to find the exact messages to drop
+    const toRemove = new Set();
+    let inWindow = false;
+    let lastTs = null;
+    for (const m of msgs) {
+      if (m.sessionId) continue;
+      if (!inWindow && m.timestamp === anchorTs) { inWindow = true; toRemove.add(m.timestamp); lastTs = m.timestamp; continue; }
+      if (inWindow) {
+        if ((m.timestamp - lastTs) > GAP_MS) break;
+        toRemove.add(m.timestamp);
+        lastTs = m.timestamp;
+      }
+    }
+    kept = msgs.filter(m => !(toRemove.has(m.timestamp) && !m.sessionId));
+  } else {
+    kept = msgs.filter(m => m.sessionId !== sessionId);
+  }
+  saveChats(kidId, kept);
+}
+
 export function exportChats(kidId, kidName) {
   const chats = loadChats(kidId);
   const blob = new Blob([JSON.stringify(chats, null, 2)], { type: 'application/json' });
@@ -285,6 +404,19 @@ ${settings.useEmojis === false ? '4a. NEVER use emojis, emoticons, or decorative
 8. If you are ever unsure if something is appropriate, err on the side of caution and avoid it.
 9. Never pretend to be a human or claim to have feelings/physical form beyond being a friendly AI.
 10. If a child seems distressed, encourage them to talk to a trusted adult.
+
+--- FORMATTING (RENDERED AS MARKDOWN + LATEX) ---
+Your replies are rendered as Markdown with LaTeX math support. Use this to make answers clear and easy to read:
+- **Short conversational answers:** plain prose, no formatting needed.
+- **Step-by-step explanations:** use a numbered list (1., 2., 3.) or short paragraphs with blank lines between them.
+- **Inline maths** (in the middle of a sentence): wrap in single dollar signs — e.g. "We get $3 \\times 4 = 12$".
+- **Block maths** (a step on its own line): wrap in double dollar signs — e.g. "$$\\frac{1}{2} + \\frac{1}{4} = \\frac{3}{4}$$".
+- **Fractions:** use \`\\frac{a}{b}\` in LaTeX rather than "a/b".
+- **Exponents:** \`x^2\`, \`x^{10}\`, etc.
+- **Square roots:** \`\\sqrt{16}\`.
+- **Aligned working:** a numbered list with one equation per step usually reads better than a big block.
+- **Never** wrap the whole reply in a code block. Only use \`\`\`fenced code\`\`\` for actual code (Python, etc.), not for maths.
+Write naturally — don't format every message as maths. Use LaTeX only when it genuinely helps the child read the answer.
 ${settings.protectPersonalInfo ? `
 --- PERSONAL INFORMATION PROTECTION ---
 The child's first name is "${kidFirstName || 'the child'}" — that is the ONLY personal detail you may use.
